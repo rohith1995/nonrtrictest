@@ -1,0 +1,5 @@
+.tmp.json
+.dockererr
+.env
+.payload
+kafkaprocon

@@ -1,0 +1,74 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: {{.Name}}-outbound-filter
+  namespace: {{.Namespace}} 
+spec:
+  workloadSelector:
+    labels:
+      app.kubernetes.io/name: {{.Name}} 
+  configPatches:
+    # The first patch adds the lua filter to the listener/http connection manager
+  - applyTo: HTTP_FILTER
+    match:
+      context: SIDECAR_OUTBOUND
+      listener:
+        filterChain:
+          filter:
+            name: "envoy.filters.network.http_connection_manager"
+            subFilter:
+              name: "envoy.filters.http.router"
+    patch:
+      operation: INSERT_BEFORE
+      value: # lua filter specification
+        name: envoy.lua
+        typed_config:
+          "@type": "type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua"
+          inlineCode: |
+            function envoy_on_request(request_handle)
+              local uri = request_handle:headers():get(":path")
+              local method = request_handle:headers():get(":method")
+              if (method ~= "POST" and uri ~= "/auth/realms/{{.Realm}}/protocol/openid-connect/token")
+              then
+               -- Make an HTTP call to an upstream host with the following headers, body, and timeout.
+               local headers, body = request_handle:httpCall(
+                "jwt_cluster",
+                {
+                 [":method"] = "GET",
+                 [":path"] = "/token",
+                 [":authority"] = "jwt-proxy",
+                 ["realm"] = "{{.Realm}}",
+                 ["client"] = "{{.Client}}",
+                 ["authenticator"] = "{{.Authenticator}}",
+                 ["caCrt"] = "{{.CaCrt}}",
+                 ["tlsCrt"] = "{{.TlsCrt}}",
+                 ["tlsKey"] = "{{.TlsKey}}",
+                 ["ns"] = "{{.Namespace}}"
+                },
+               "jwt call",
+               5000)
+               if (headers["authorization"] ~= nil)
+               then
+                   request_handle:headers():add("authorization", headers["authorization"])
+               end
+              end
+            end
+  - applyTo: CLUSTER
+    match:
+      context: SIDECAR_OUTBOUND
+    patch:
+      operation: ADD
+      value: # cluster specification
+        name: jwt_cluster
+        type: STRICT_DNS
+        connect_timeout: 60s
+        lb_policy: ROUND_ROBIN
+        load_assignment:
+          cluster_name: jwt_cluster
+          endpoints:
+          - lb_endpoints:
+            - endpoint:
+                address:
+                  socket_address:
+                    address: 0.0.0.0
+                    port_value: 8888

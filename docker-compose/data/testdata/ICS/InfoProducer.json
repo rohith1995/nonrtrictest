@@ -1,0 +1,5 @@
+{
+    "supported_info_types": ["type1"],
+    "info_job_callback_url": "http://consumer:80/",
+    "info_producer_supervision_callback_url": "http://consumer:80/"
+}

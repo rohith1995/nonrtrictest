@@ -1,0 +1,51 @@
+#  ============LICENSE_START===============================================
+#  Copyright (C) 2023 Nordix Foundation. All rights reserved.
+#  ========================================================================
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#  ============LICENSE_END=================================================
+#
+
+version: '3.0'
+
+# Compose file to bring up 3 groups of ric simulator containers with variable interface and count
+
+networks:
+  default:
+    external: true
+    name: ${DOCKER_SIM_NWNAME}
+
+services:
+  ${RICMEDIATOR_SIMCOMPOSE_SERVICE_NAME}:
+    image: ${RICMEDIATOR_SIM_IMAGE}
+    networks:
+      - default
+    ports:
+      - ${RICMEDIATOR_SIM_INTERNAL_PORT}/tcp
+      - ${RICMEDIATOR_SIM_INTERNAL_SECURE_PORT}/tcp
+    environment:
+      - DBAAS_SERVICE_HOST=dbaas
+      - DBAAS_SERVICE_PORT=6379
+    labels:
+      - "orana1sim=app"
+      - "nrttest_app=RICMEDIATORSIM"
+      - "nrttest_dp=${RICMEDIATOR_SIM_DISPLAY_NAME}"
+
+  dbaas:
+    image: ${RICMEDIATOR_SIM_DB_IMAGE}
+    networks:
+      - default
+    ports:
+      - 6379/tcp
+    labels:
+      - "nrttest_app=RICMEDIATORSIM"
+      - "nrttest_dp=${RICMEDIATOR_SIM_DISPLAY_NAME}"

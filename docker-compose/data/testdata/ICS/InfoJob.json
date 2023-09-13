@@ -1,0 +1,11 @@
+{
+    "eiTypeId": "type1",
+    "jobResultUri": "http://consumer:80/",
+    "jobOwner": "ricsim_g3_1",
+    "jobStatusNotificationUri": "http://consumer:80/",
+    "jobDefinition": {
+        "jobparam1": "value1_job1",
+        "jobparam2": "value2_job1",
+        "jobparam3": "value3_job1"
+    }
+}

@@ -1,0 +1,4 @@
+tmp
+.tmp.json
+.dockererr
+nginx_wsgi_flask/__init__.py

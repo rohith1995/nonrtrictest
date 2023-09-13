@@ -1,0 +1,97 @@
+#  ============LICENSE_START=======================================================
+#  Copyright (C) 2020-2022 Nordix Foundation
+#  ================================================================================
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+#  SPDX-License-Identifier: Apache-2.0
+#  ============LICENSE_END=========================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: $A1PMS_APP_NAME
+  namespace: $KUBE_NONRTRIC_NAMESPACE
+  labels:
+    run: $A1PMS_APP_NAME
+    autotest: A1PMS
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run: $A1PMS_APP_NAME
+  template:
+    metadata:
+      labels:
+        run: $A1PMS_APP_NAME
+        autotest: A1PMS
+    spec:
+      securityContext:
+        runAsUser: 0
+# Need to run as root to be able to store files in dir mounted as a hostPath volume
+      containers:
+      - name: $A1PMS_APP_NAME
+        image: $A1PMS_IMAGE
+        imagePullPolicy: $KUBE_IMAGE_PULL_POLICY
+        ports:
+        - name: http
+          containerPort: $A1PMS_INTERNAL_PORT
+        - name: https
+          containerPort: $A1PMS_INTERNAL_SECURE_PORT
+        volumeMounts:
+        - mountPath: $A1PMS_CONFIG_MOUNT_PATH
+          name: a1pms-conf-name
+        - mountPath: $A1PMS_CONTAINER_MNT_DIR
+          name: a1pms-pv-data-name
+        - mountPath: $A1PMS_DATA_MOUNT_PATH
+          name: a1pms-data-name
+#A1PMS_JWT_START
+        - mountPath: $A1PMS_SIDECAR_MOUNT
+          name: token-cache-volume
+#A1PMS_JWT_STOP
+#A1PMS_JWT_START
+      - name: $AUTHSIDECAR_APP_NAME
+        image: $AUTHSIDECAR_IMAGE
+        imagePullPolicy: $KUBE_IMAGE_PULL_POLICY
+        env:
+        - name: CREDS_GRANT_TYPE
+          value: $A1PMS_CREDS_GRANT_TYPE
+        - name: CREDS_CLIENT_SECRET
+          value: $A1PMS_CREDS_CLIENT_SECRET
+        - name: CREDS_CLIENT_ID
+          value: $A1PMS_CREDS_CLIENT_ID
+        - name: OUTPUT_FILE
+          value: $A1PMS_SIDECAR_JWT_FILE
+        - name: AUTH_SERVICE_URL
+          value: $A1PMS_AUTH_SERVICE_URL
+        volumeMounts:
+        - mountPath: $A1PMS_SIDECAR_MOUNT
+          name: token-cache-volume
+#A1PMS_JWT_STOP
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: $A1PMS_CONFIG_CONFIGMAP_NAME
+        name: a1pms-conf-name
+      - configMap:
+          defaultMode: 420
+          name: $A1PMS_DATA_CONFIGMAP_NAME
+        name: a1pms-data-name
+      - persistentVolumeClaim:
+          claimName: $A1PMS_DATA_PVC_NAME
+        name: a1pms-pv-data-name
+#A1PMS_JWT_START
+      - name: token-cache-volume
+        emptyDir: {}
+#A1PMS_JWT_STOP
+# Selector will be set when pod is started first time
+      nodeSelector:
+

@@ -1,0 +1,41 @@
+#  ============LICENSE_START=======================================================
+#  Copyright (C) 2020-2022 Nordix Foundation
+#  ================================================================================
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+#  SPDX-License-Identifier: Apache-2.0
+#  ============LICENSE_END=========================================================
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pvc-cleaner
+  namespace: $PVC_CLEANER_NAMESPACE
+  labels:
+    run: $PVC_CLEANER_APP_NAME
+    autotest: PVCCLEANER
+spec:
+  restartPolicy: Never
+  containers:
+  - name: pvc-cleaner
+    image: $PVC_CLEANER_IMAGE
+    securityContext:
+      runAsUser: 0
+    command: ["/bin/sh","-c"]
+    args: ["rm -rf $PVC_CLEANER_RM_PATH/* ; if [ $? -ne 0 ]; then echo 'Delete failure: '$PVC_CLEANER_RM_PATH; else echo 'Delete OK: '$PVC_CLEANER_RM_PATH; fi"]
+    volumeMounts:
+    - mountPath: $PVC_CLEANER_RM_PATH
+      name: pvc-cleaner-m-vol
+  volumes:
+  - name: pvc-cleaner-m-vol
+    persistentVolumeClaim:
+      claimName: $PVC_CLEANER_CLAIMNAME

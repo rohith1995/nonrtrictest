@@ -1,0 +1,9 @@
+.a1pms_config.json
+.docker-images-table
+.httplog*
+.image-list
+.output.a1pms_config.json
+.result*
+.timer_measurement.txt
+.tmp.curl.json
+logs/
