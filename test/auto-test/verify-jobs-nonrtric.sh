@@ -2,6 +2,7 @@
 
 TEST_DIRECTORY="test/auto-test"
 TEST_SCRIPT="./Suite-Verify-jobs.sh"
+DOCKER_COMPOSE_VERSION="v2.21.0"
 
 # Check if jq is installed, and install it if not
 if ! command -v jq &> /dev/null; then
@@ -13,7 +14,7 @@ fi
 # Function to install Docker Compose version 2
 install_docker_compose() {
     echo "Installing Docker Compose version 2..."
-    sudo curl -L "https://github.com/docker/compose/releases/download/v2.21.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    sudo curl -L "https://github.com/docker/compose/releases/download/"$DOCKER_COMPOSE_VERSION"/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
     sudo chmod +x /usr/local/bin/docker-compose
     sudo ln -s /usr/local/bin/docker-compose /usr/libexec/docker/cli-plugins/docker-compose
 }
